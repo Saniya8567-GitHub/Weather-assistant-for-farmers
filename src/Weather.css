@@ -1,0 +1,13 @@
+.weather-box {
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f3f3f3;
+  text-align: center;
+  font-family: sans-serif;
+}
+.weather-box input {
+  padding: 8px;
+  margin-right: 8px;
+}
