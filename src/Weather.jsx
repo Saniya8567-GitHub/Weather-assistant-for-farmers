@@ -7,6 +7,8 @@ export default function Weather() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [crop, setCrop] = useState("rice");
+
   const [favorites, setFavorites] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("favCities") || "[]");
