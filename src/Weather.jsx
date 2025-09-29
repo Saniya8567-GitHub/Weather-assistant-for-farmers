@@ -1,66 +1,91 @@
+import { WiThermometer, WiHumidity, WiCloud, WiStrongWind } from "react-icons/wi";
+import { GiFarmer } from "react-icons/gi"; // crop/farmer symbol
 import { useState } from "react";
 
 export default function Weather() {
   const [city, setCity] = useState("");
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // ===== Step 1: Fetch weather =====
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const apiKey = "78ed0eeee94a2de54804f3e574f7d36c"; // <-- replace with your actual key
+
+  const fetchWeather = async (url) => {
+    setLoading(true);
     setError("");
     setData(null);
-
     try {
-      const apiKey = "YOUR_API_KEY"; // <-- put your OpenWeatherMap API key
-      const res = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`
-      );
-      if (!res.ok) throw new Error("City not found");
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Location not found");
       const json = await res.json();
       setData(json);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
+  const handleCitySubmit = (e) => {
+    e.preventDefault();
+    fetchWeather(
+      `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`
+    );
+  };
 
-  // ===== Step 2: Simple crop advice based on temperature =====
-  const getAdvice = (temp) => {
-    if (temp >= 25) return "Great time for rice, sugarcane, or maize.";
-    if (temp >= 15) return "Good for wheat, barley, and vegetables.";
-    if (temp >= 5)  return "Suitable for mustard and some pulses.";
-    return "Too cold—protect crops with covers or greenhouses.";
+  const handleMyLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        fetchWeather(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`
+        );
+      },
+      () => setError("Unable to retrieve your location")
+    );
+  };
+
+  const getAdvice = (temp, condition) => {
+    if (temp > 35) return "Too hot 🌞. Irrigate crops more frequently.";
+     if (temp < 10) return "Very cold ❄️. Protect crops from frost.";
+    if (condition.includes("rain")) return "Rainy 🌧️. Store harvested crops safely.";
+    return "Weather looks fine 👍. Good conditions for farming.";
   };
 
   return (
-    <div style={{ padding: "1rem", maxWidth: "400px", margin: "0 auto" }}>
-      <h2>Farmer Weather & Crop Tips</h2>
+    <div className="container">
+      <h2>🌾 Farmer Weather App</h2>
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: "1rem" }}>
+      <form onSubmit={handleCitySubmit} className="form">
         <input
           value={city}
           onChange={(e) => setCity(e.target.value)}
           placeholder="Enter village/city"
-          style={{ padding: "0.5rem", width: "70%" }}
         />
-        <button type="submit" style={{ padding: "0.5rem", marginLeft: "0.5rem" }}>
-          Get Weather
+        <button type="submit">Get Weather</button>
+        <button type="button" onClick={handleMyLocation}>
+          Use My Location
         </button>
       </form>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {loading && <p>Loading...</p>}
+      {error && <p className="error">{error}</p>}
+
 
       {data && (
-        <div style={{ textAlign: "left", background: "#f2f2f2", padding: "1rem", borderRadius: "8px" }}>
+        <div style={{ textAlign: "left", background: "#402b79ff", padding: "1rem", borderRadius: "8px" }}>
           <h3>{data.name}</h3>
-          <p>Temperature: {data.main.temp} °C</p>
-          <p>Humidity: {data.main.humidity}%</p>
-          <p>Condition: {data.weather[0].description}</p>
-          <p>Wind Speed: {data.wind.speed} m/s</p>
-
+          <p><WiThermometer size={24}/>Temperature: {data.main.temp} °C</p>
+          <p><WiHumidity size={24}/>Humidity: {data.main.humidity}%</p>
+          <p><WiCloud size={24}/>Condition: {data.weather[0].description}</p>
+          <p><WiStrongWind size={24}/>Wind Speed: {data.wind.speed} m/s</p>
+          <h3><GiFarmer size={24}/>Farmer Advice:</h3>
           <hr />
           <strong>Crop Advice:</strong>
-          <p>{getAdvice(data.main.temp)}</p>
+          <p>{getAdvice(data.main.temp,data.weather[0].description)}</p>
         </div>
       )}
     </div>
