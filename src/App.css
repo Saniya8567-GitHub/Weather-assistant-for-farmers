@@ -40,3 +40,30 @@
 .read-the-docs {
   color: #888;
 }
+.forecast-section {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.forecast-grid {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.forecast-card {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 12px;
+  border-radius: 12px;
+  width: 110px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+.forecast-card p {
+  margin: 4px 0;
+  color: #fff;
+  font-weight: 500;
+}
