@@ -1,6 +1,6 @@
 .weather-container {
   width: 380px;
-  background: linear-gradient(135deg, #3a7bd5, #3a6073);
+  background: linear-gradient(135deg, #01e6d2, #733a6e);
   color: white;
   padding: 22px;
   border-radius: 20px;
@@ -30,7 +30,7 @@
 }
 
 .search-box button {
-  background: #2ecc71;
+  background: #ece6e6;
   border: none;
   color: white;
   padding: 8px 12px;
