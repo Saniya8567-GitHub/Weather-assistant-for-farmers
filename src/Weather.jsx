@@ -1,313 +1,273 @@
 import { WiThermometer, WiHumidity, WiCloud, WiStrongWind } from "react-icons/wi";
 import { GiFarmer } from "react-icons/gi";
-import { useState } from "react";
+import React, { useState } from "react";
+import "./weather.css";
+
+const VITE_WEATHER_KEY = "78ed0eeee94a2de54804f3e574f7d36c"; // ✅ Replace with your API key
 
 export default function Weather() {
   const [city, setCity] = useState("");
-  const [data, setData] = useState(null);
+  const [weatherData, setWeatherData] = useState(null);
   const [forecastInfo, setForecastInfo] = useState(null);
-  const [forecastList, setForecastList] = useState([]); // 🌤️ for 5-day forecast
-  const [error, setError] = useState(null);
+  const [dailyForecast, setDailyForecast] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [advice, setAdvice] = useState("");
+  const [locationText, setLocationText] = useState("");
+  const [language, setLanguage] = useState("en"); // 🌐 Language state
 
-  const API_KEY = "78ed0eeee94a2de54804f3e574f7d36c";
-
-  // ---------- Helper to analyze rain ----------
-  function analyzeForecastList(list) {
-    const now = Math.floor(Date.now() / 1000);
-    const next24 = now + 24 * 3600;
-    const next48 = now + 48 * 3600;
-    let total24 = 0,
-      total24to48 = 0;
-
-    for (const item of list) {
-      const t = item.dt;
-      const rain3 = (item.rain && (item.rain["3h"] || 0)) || 0;
-      const isThunder =
-        item.weather?.[0]?.main?.toLowerCase().includes("thunder") || false;
-      if (t > now && t <= next24) {
-        total24 += rain3;
-        if (isThunder) total24 += 5;
-      } else if (t > next24 && t <= next48) {
-        total24to48 += rain3;
-        if (isThunder) total24to48 += 5;
-      }
-    }
-
-    total24 = Math.round(total24 * 10) / 10;
-    total24to48 = Math.round(total24to48 * 10) / 10;
-
-    function classify(mm) {
-      if (mm >= 20) return { level: "heavy", text: "Heavy rain" };
-      if (mm >= 2) return { level: "moderate", text: "Light/Moderate rain" };
-      return { level: "none", text: "No significant rain" };
-    }
-
-    const c24 = classify(total24);
-    const c48 = classify(total24to48);
-
-    const msg24 =
-      c24.level === "heavy"
-        ? `⚠️ Heavy rain expected in next 24 hours (~${total24} mm). Protect stored grain & avoid harvesting.`
-        : c24.level === "moderate"
-        ? `☔ Rain expected in next 24 hours (~${total24} mm). Consider postponing harvest if wet.`
-        : `☀️ No significant rain in next 24 hours (~${total24} mm). Good for field work/harvest.`;
-
-    const msg48 =
-      c48.level === "heavy"
-        ? `⚠️ Heavy rain expected tomorrow (~${total24to48} mm). Plan accordingly.`
-        : c48.level === "moderate"
-        ? `☔ Rain likely tomorrow (~${total24to48} mm). Monitor before harvesting.`
-        : `☀️ No major rain expected tomorrow (~${total24to48} mm).`;
-
-    return {
-      total24,
-      total48: total24to48,
-      message24: msg24,
-      message48: msg48,
-    };
-  }
-
-  // ---------- Forecast fetch (by coordinates) ----------
-  async function getForecastByCoords(lat, lon) {
-    try {
-      const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
-      console.log("Fetching forecast:", url);
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Forecast fetch failed: ${res.status}`);
-      const json = await res.json();
-      if (!json.list) throw new Error("Forecast format unexpected");
-      const info = analyzeForecastList(json.list);
-      setForecastInfo(info);
-
-      // 🌤️ Extract 5-day simplified forecast
-      const daily = [];
-      const seen = new Set();
-      for (const item of json.list) {
-        const date = item.dt_txt.split(" ")[0];
-        if (!seen.has(date)) {
-          seen.add(date);
-          daily.push(item);
-        }
-      }
-      setForecastList(daily.slice(1, 6));
-    } catch (err) {
-      console.error("Forecast error:", err);
-      setForecastInfo(null);
-      setForecastList([]);
-    }
-  }
-
-  // ---------- Current weather ----------
-  const fetchWeatherByCity = async () => {
-    if (!city) {
-      setError("Please enter a city name");
-      return;
-    }
+  // ---------------- Fetch Weather by City -----------------
+  async function getWeatherByCity() {
+    if (!city) return;
     setLoading(true);
-    setError(null);
-    setData(null);
-    setForecastInfo(null);
-    setForecastList([]);
     try {
-      const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
-        city
-      )}&appid=${API_KEY}&units=metric`;
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${VITE_WEATHER_KEY}&units=metric&lang=${language}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error("City not found");
       const json = await res.json();
-      setData(json);
-      if (json.coord) await getForecastByCoords(json.coord.lat, json.coord.lon);
+      setWeatherData(json);
+      getForecastByCoords(json.coord.lat, json.coord.lon);
+      generateAdvice(json);
     } catch (err) {
-      setError(err.message);
-      setData(null);
+      console.error("Weather fetch error:", err);
+      setWeatherData(null);
       setForecastInfo(null);
-      setForecastList([]);
+      setDailyForecast([]);
+      setAdvice("City not found or invalid input.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const fetchWeatherByCoords = async (lat, lon) => {
-    setLoading(true);
-    setError(null);
-    setData(null);
-    setForecastInfo(null);
-    setForecastList([]);
-    try {
-      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Location not found");
-      const json = await res.json();
-      setData(json);
-      await getForecastByCoords(lat, lon);
-    } catch (err) {
-      setError(err.message);
-      setData(null);
-      setForecastInfo(null);
-      setForecastList([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ---------- Handlers ----------
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await fetchWeatherByCity();
-  };
-
-  const handleLocation = () => {
+  // ---------------- Fetch Weather by GPS -----------------
+  async function getWeatherByLocation() {
     if (!navigator.geolocation) {
-      setError("Geolocation not supported");
+      alert("Geolocation not supported in your browser.");
       return;
     }
+
+    setLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        fetchWeatherByCoords(latitude, longitude);
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        setLocationText(`📍 Lat: ${lat.toFixed(2)}, Lon: ${lon.toFixed(2)}`);
+        try {
+          const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${VITE_WEATHER_KEY}&units=metric&lang=${language}`;
+          const res = await fetch(url);
+          const json = await res.json();
+          setWeatherData(json);
+          getForecastByCoords(lat, lon);
+          generateAdvice(json);
+        } catch (err) {
+          console.error("GPS weather error:", err);
+        } finally {
+          setLoading(false);
+        }
       },
-      () => setError("Location access denied or unavailable")
+      (err) => {
+        alert("Unable to fetch location. Please allow location access.");
+        setLoading(false);
+      }
     );
+  }
+
+  // ---------------- Fetch Forecast -----------------
+  async function getForecastByCoords(lat, lon) {
+    try {
+      const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${VITE_WEATHER_KEY}&units=metric&lang=${language}`;
+      const res = await fetch(url);
+      const json = await res.json();
+
+      const info = analyzeForecastList(json.list);
+      setForecastInfo(info);
+
+      const grouped = {};
+      json.list.forEach((entry) => {
+        const date = new Date(entry.dt_txt).toLocaleDateString("en-IN", {
+          weekday: "short",
+          day: "numeric",
+        });
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push(entry);
+      });
+
+      const daily = Object.entries(grouped)
+        .slice(0, 5)
+        .map(([day, values]) => {
+          const temps = values.map((v) => v.main.temp);
+          const avgTemp = temps.reduce((a, b) => a + b, 0) / temps.length;
+          const condition = values[0].weather[0].description;
+          return { day, temp: avgTemp.toFixed(1), condition };
+        });
+
+      setDailyForecast(daily);
+    } catch (err) {
+      console.error("Forecast fetch error:", err);
+    }
+  }
+
+  // ---------------- Analyze Rainfall -----------------
+  function analyzeForecastList(list) {
+    const next24 = list.slice(0, 8);
+    const total24 = next24.reduce(
+      (sum, e) => sum + (e.rain ? e.rain["3h"] || 0 : 0),
+      0
+    );
+
+    return {
+      rain24: total24 > 0,
+      total24: total24.toFixed(1),
+    };
+  }
+
+  // ---------------- Farmer Advice -----------------
+  function generateAdvice(data) {
+    if (!data) return;
+    const temp = data.main.temp;
+    const condition = data.weather[0].main.toLowerCase();
+
+    if (condition.includes("rain")) {
+      setAdvice("☔ Heavy rainfall expected — cover stored grains & delay irrigation.");
+    } else if (condition.includes("cloud")) {
+      setAdvice("🌥️ Cloudy day — suitable for fertilizer application.");
+    } else if (condition.includes("clear")) {
+      if (temp > 32) {
+        setAdvice("☀️ Hot & dry — good day for harvesting wheat, maize, or cotton.");
+      } else {
+        setAdvice("🌾 Clear skies — suitable for sowing or harvesting pulses & cereals.");
+      }
+    } else if (condition.includes("storm")) {
+      setAdvice("⚠️ Thunderstorm warning — secure loose items & avoid spraying pesticides.");
+    } else {
+      setAdvice("🪴 Normal weather — continue regular farm activities.");
+    }
+  }
+
+  // ---------------- Language Translations -----------------
+  const translations = {
+    en: {
+      title: "🌾 Smart Weather Assistant",
+      search: "Search",
+      useLocation: "📍 Use My Location",
+      rainfallAlerts: "☔ Rainfall Alerts",
+      next24: "Next 24 hrs:",
+      forecast: "📅 5-Day Forecast",
+      advice: "🌿 Farmer Advice",
+      loading: "Loading...",
+      noRain: "☀️ No rain expected",
+      rainExpected: "🌧️ Expected",
+    },
+    hi: {
+      title: "🌾 स्मार्ट मौसम सहायक",
+      search: "खोजें",
+      useLocation: "📍 मेरा स्थान उपयोग करें",
+      rainfallAlerts: "☔ वर्षा अलर्ट",
+      next24: "अगले 24 घंटे:",
+      forecast: "📅 5-दिवसीय पूर्वानुमान",
+      advice: "🌿 किसान सलाह",
+      loading: "लोड हो रहा है...",
+      noRain: "☀️ बारिश की संभावना नहीं",
+      rainExpected: "🌧️ बारिश की संभावना",
+    },
+    mr: {
+      title: "🌾 स्मार्ट हवामान सहाय्यक",
+      search: "शोधा",
+      useLocation: "📍 माझे स्थान वापरा",
+      rainfallAlerts: "☔ पावसाचा इशारा",
+      next24: "पुढील 24 तास:",
+      forecast: "📅 5 दिवसांचा अंदाज",
+      advice: "🌿 शेतकरी सल्ला",
+      loading: "लोड होत आहे...",
+      noRain: "☀️ पाऊस अपेक्षित नाही",
+      rainExpected: "🌧️ पाऊस अपेक्षित",
+    },
   };
 
-  const getCropSuggestions = (temp) => {
-    if (temp >= 10 && temp <= 25) return "Wheat, Mustard, Barley, Potato";
-    if (temp >= 18 && temp <= 27) return "Maize, Tomato, Soybean";
-    if (temp >= 20 && temp <= 35) return "Rice, Sugarcane, Cotton, Millets";
-    if (temp > 35) return "Too hot 🌡️ — consider heat-tolerant crops like Millets";
-    if (temp < 10) return "Too cold ❄️ — limited crops grow well";
-    return "No specific crop data available";
-  };
+  const t = translations[language];
 
-  // ---------- Render ----------
   return (
-    <div style={{ padding: "20px", textAlign: "center" }}>
-      <h2>🌾 Farmer Weather App</h2>
+    <div className="weather-container">
+      <h2 className="title">{t.title}</h2>
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: "12px" }}>
-        <input
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          placeholder="Enter village/city"
-          style={{ padding: "8px", marginRight: "8px" }}
-        />
-        <button type="submit" disabled={loading}>🔍 Get Weather</button>
-      </form>
-
-      <div style={{ marginBottom: "12px" }}>
-        <button onClick={handleLocation} disabled={loading}>📍 Use My Location</button>
+      <div className="lang-select">
+        🌐 <span>Select Language:</span>
+        <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+          <option value="en">English</option>
+          <option value="hi">Hindi</option>
+          <option value="mr">Marathi</option>
+        </select>
       </div>
 
-      {loading && <p>Loading weather & forecast…</p>}
-      {error && <p style={{ color: "salmon" }}>{error}</p>}
+      <div className="search-box">
+        <input
+          type="text"
+          placeholder="Enter city..."
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+        />
+        <button onClick={getWeatherByCity} disabled={loading}>
+          {loading ? t.loading : t.search}
+        </button>
+        <button className="gps-btn" onClick={getWeatherByLocation}>
+          {t.useLocation}
+        </button>
+      </div>
 
-      {data && (
-        <div
-          style={{
-            background: "#0b1220cc",
-            color: "#fff",
-            padding: "18px",
-            borderRadius: "12px",
-            maxWidth: 480,
-            margin: "0 auto",
-            boxShadow: "0 6px 20px rgba(2,6,23,0.6)",
-            textAlign: "left",
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>
-            📍 {data.name}
-            {data.sys?.country ? `, ${data.sys.country}` : ""}
-          </h3>
+      {locationText && <p className="location-text">{locationText}</p>}
 
-          <p style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <WiThermometer size={22} /> <strong>{Math.round(data.main.temp)}°C</strong>
-            <span style={{ marginLeft: 12 }}>Feels: {Math.round(data.main.feels_like)}°C</span>
+      {weatherData && (
+        <div className="weather-box">
+          <h3>{weatherData.name}</h3>
+          <p>
+            <WiThermometer size={24} /> {weatherData.main.temp}°C
           </p>
-          <p style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <WiHumidity size={20} /> Humidity: {data.main.humidity}%
+          <p>
+            <WiCloud size={24} /> {weatherData.weather[0].description}
           </p>
-          <p style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <WiCloud size={20} /> Condition: {data.weather[0].description}
+          <p>
+            <WiStrongWind size={24} /> {weatherData.wind.speed} m/s
           </p>
-          <p style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <WiStrongWind size={20} /> Wind: {data.wind.speed} m/s
+          <p>
+            <WiHumidity size={24} /> {weatherData.main.humidity}%
           </p>
+        </div>
+      )}
 
-          <hr style={{ border: "none", height: 1, background: "#203040", margin: "12px 0" }} />
-
-          <p style={{ color: "#bde0a8" }}>
-            <GiFarmer /> <strong>Best crops for {Math.round(data.main.temp)}°C:</strong>{" "}
-            {getCropSuggestions(data.main.temp)}
+      {forecastInfo && (
+        <div className="forecast-alert">
+          <h4>{t.rainfallAlerts}</h4>
+          <p>
+            {t.next24}{" "}
+            {forecastInfo.rain24
+              ? `${t.rainExpected} (${forecastInfo.total24} mm)`
+              : t.noRain}
           </p>
+        </div>
+      )}
 
-          {forecastInfo ? (
-            <div style={{ marginTop: 12, padding: 10, borderRadius: 8, background: "#fff8", color: "#111" }}>
-              <p style={{ margin: 0, fontWeight: 700 }}>{forecastInfo.message24}</p>
-              <p style={{ margin: "6px 0 0" }}>{forecastInfo.message48}</p>
-              <p style={{ marginTop: 8, fontSize: 12, color: "#222" }}>
-                (Forecast totals: next 24h ≈ {forecastInfo.total24} mm · next 24–48h ≈ {forecastInfo.total48} mm)
-              </p>
-            </div>
-          ) : (
-            <p style={{ marginTop: 10, color: "#dbeafe" }}>Forecast not available.</p>
-          )}
-
-          {/* 🌤️ Extended 5-Day Forecast */}
-          {forecastList.length > 0 && (
-            <div
-              style={{
-                marginTop: 18,
-                background: "#1b2437",
-                borderRadius: 10,
-                padding: 12,
-                color: "#fff",
-                boxShadow: "0 4px 10px rgba(0,0,0,0.4)",
-              }}
-            >
-              <h4 style={{ textAlign: "center", marginBottom: 10 }}>📅 5-Day Forecast</h4>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  flexWrap: "wrap",
-                  gap: 12,
-                }}
-              >
-                {forecastList.map((day, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      background: "#22314d",
-                      borderRadius: 8,
-                      padding: 10,
-                      width: 100,
-                      textAlign: "center",
-                      color: "#e0f2fe",
-                    }}
-                  >
-                    <p style={{ margin: 0, fontWeight: "bold" }}>
-                      {new Date(day.dt_txt).toLocaleDateString("en-IN", {
-                        weekday: "short",
-                        day: "numeric",
-                      })}
-                    </p>
-                    <img
-                      src={`https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png`}
-                      alt="icon"
-                      style={{ width: 45, height: 45 }}
-                    />
-                    <p style={{ margin: 0, fontWeight: "bold" }}>
-                      {Math.round(day.main.temp)}°C
-                    </p>
-                    <p style={{ fontSize: 13, margin: 0 }}>
-                      {day.weather[0].main}
-                    </p>
-                  </div>
-                ))}
+      {dailyForecast.length > 0 && (
+        <div className="forecast-section">
+          <h4>{t.forecast}</h4>
+          <div className="forecast-grid">
+            {dailyForecast.map((day, i) => (
+              <div key={i} className="forecast-card">
+                <p>
+                  <strong>{day.day}</strong>
+                </p>
+                <p>{day.temp}°C</p>
+                <p>{day.condition}</p>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
+        </div>
+      )}
+
+      {advice && (
+        <div className="farmer-advice">
+          <h4>{t.advice}</h4>
+          <p>
+            <GiFarmer size={22} /> {advice}
+          </p>
         </div>
       )}
     </div>
