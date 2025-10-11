@@ -1,7 +1,7 @@
 import { WiThermometer, WiHumidity, WiCloud, WiStrongWind } from "react-icons/wi";
 import { GiFarmer } from "react-icons/gi";
 import React, { useState } from "react";
-import "./Weather.css";
+import "./Weather.css"; 
 
 const VITE_WEATHER_KEY = "78ed0eeee94a2de54804f3e574f7d36c"; // ✅ Replace with your API key
 
@@ -235,7 +235,7 @@ export default function Weather() {
 
       {forecastInfo && (
         <div className="forecast-alert">
-          <h4>{t.rainfallAlerts}</h4>
+          <h4><strong>{t.rainfallAlerts}</strong></h4>
           <p>
             {t.next24}{" "}
             {forecastInfo.rain24
