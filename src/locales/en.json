@@ -1,0 +1,27 @@
+{
+  "title": "🌾 Smart Weather Assistant",
+  "search": "Search",
+  "useLocation": "📍 Use My Location",
+  "rainfallAlerts": "☔ Rainfall Alerts",
+  "next24": "Next 24 hrs:",
+  "forecast": "📅 5-Day Forecast",
+  "adviceTitle": "🌿 Farmer Advice",
+  "loading": "Loading...",
+  "noRain": "☀️ No rain expected",
+  "rainExpected": "🌧️ Rain expected",
+  "selectLang": "Select Language:",
+  "placeholders": { "city": "Enter city..." },
+  "advice": {
+    "heavyRain": "☔ Heavy rainfall expected — cover stored grains & delay irrigation.",
+    "cloudy": "🌥️ Cloudy day — suitable for fertilizer application.",
+    "clear": "🌾 Clear skies — suitable for sowing or harvesting pulses & cereals.",
+    "hotDry": "☀️ Hot & dry — good day for harvesting wheat, maize, or cotton.",
+    "storm": "⚠️ Thunderstorm warning — secure loose items & avoid spraying pesticides.",
+    "normal": "🪴 Normal weather — continue regular farm activities."
+  },
+  "errors": {
+    "cityNotFound": "City not found or invalid input.",
+    "geoNotSupported": "Geolocation not supported in your browser.",
+    "locationDenied": "Unable to fetch location. Please allow location access."
+  }
+}

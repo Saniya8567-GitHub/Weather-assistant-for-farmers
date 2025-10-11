@@ -1,19 +1,23 @@
+import React, { useState } from "react";
 import { WiThermometer, WiHumidity, WiCloud, WiStrongWind } from "react-icons/wi";
 import { GiFarmer } from "react-icons/gi";
-import React, { useState } from "react";
-import "./Weather.css"; 
+import "./Weather.css";
+import { useTranslation } from "react-i18next";
 
-const VITE_WEATHER_KEY = "78ed0eeee94a2de54804f3e574f7d36c"; // ✅ Replace with your API key
+const VITE_WEATHER_KEY = "78ed0eeee94a2de54804f3e574f7d36c"; // Replace with your API key
 
 export default function Weather() {
+  const { t, i18n } = useTranslation();
+
   const [city, setCity] = useState("");
   const [weatherData, setWeatherData] = useState(null);
   const [forecastInfo, setForecastInfo] = useState(null);
   const [dailyForecast, setDailyForecast] = useState([]);
   const [loading, setLoading] = useState(false);
   const [advice, setAdvice] = useState("");
+  const [cropSuggestion, setCropSuggestion] = useState("");
   const [locationText, setLocationText] = useState("");
-  const [language, setLanguage] = useState("en"); // 🌐 Language state
+  const [language, setLanguage] = useState("en");
 
   // ---------------- Fetch Weather by City -----------------
   async function getWeatherByCity() {
@@ -33,6 +37,7 @@ export default function Weather() {
       setForecastInfo(null);
       setDailyForecast([]);
       setAdvice("City not found or invalid input.");
+      setCropSuggestion("");
     } finally {
       setLoading(false);
     }
@@ -120,78 +125,56 @@ export default function Weather() {
     };
   }
 
-  // ---------------- Farmer Advice -----------------
+  // ---------------- Farmer Advice + Crop Suggestion -----------------
   function generateAdvice(data) {
     if (!data) return;
     const temp = data.main.temp;
     const condition = data.weather[0].main.toLowerCase();
+    let weatherAdvice = "";
+    let crop = "";
 
     if (condition.includes("rain")) {
-      setAdvice("☔ Heavy rainfall expected — cover stored grains & delay irrigation.");
+      weatherAdvice =
+        "☔ Heavy rainfall expected — cover stored grains & delay irrigation.";
+      crop = "🌾 Best crops: Rice, Jute, Sugarcane.";
     } else if (condition.includes("cloud")) {
-      setAdvice("🌥️ Cloudy day — suitable for fertilizer application.");
+      weatherAdvice = "🌥️ Cloudy day — suitable for fertilizer application.";
+      crop = "🌽 Best crops: Maize, Cotton, Soybean.";
     } else if (condition.includes("clear")) {
       if (temp > 32) {
-        setAdvice("☀️ Hot & dry — good day for harvesting wheat, maize, or cotton.");
+        weatherAdvice = "☀️ Hot & dry — good day for harvesting wheat or maize.";
+        crop = "🌿 Suitable crops: Bajra, Groundnut, Cotton.";
       } else {
-        setAdvice("🌾 Clear skies — suitable for sowing or harvesting pulses & cereals.");
+        weatherAdvice = "🌾 Clear skies — great for sowing or harvesting pulses.";
+        crop = "🌱 Suitable crops: Lentil, Chickpea, Mustard.";
       }
     } else if (condition.includes("storm")) {
-      setAdvice("⚠️ Thunderstorm warning — secure loose items & avoid spraying pesticides.");
+      weatherAdvice =
+        "⚠️ Thunderstorm warning — secure loose items & avoid pesticide spraying.";
+      crop = "🚫 Avoid field work until weather clears.";
     } else {
-      setAdvice("🪴 Normal weather — continue regular farm activities.");
+      weatherAdvice = "🪴 Normal weather — continue regular farm activities.";
+      crop = "🌻 Suitable crops: Vegetables, Sugarcane, Paddy.";
     }
+
+    setAdvice(weatherAdvice);
+    setCropSuggestion(crop);
   }
 
-  // ---------------- Language Translations -----------------
-  const translations = {
-    en: {
-      title: "🌾 Smart Weather Assistant",
-      search: "Search",
-      useLocation: "📍 Use My Location",
-      rainfallAlerts: "☔ Rainfall Alerts",
-      next24: "Next 24 hrs:",
-      forecast: "📅 5-Day Forecast",
-      advice: "🌿 Farmer Advice",
-      loading: "Loading...",
-      noRain: "☀️ No rain expected",
-      rainExpected: "🌧️ Expected",
-    },
-    hi: {
-      title: "🌾 स्मार्ट मौसम सहायक",
-      search: "खोजें",
-      useLocation: "📍 मेरा स्थान उपयोग करें",
-      rainfallAlerts: "☔ वर्षा अलर्ट",
-      next24: "अगले 24 घंटे:",
-      forecast: "📅 5-दिवसीय पूर्वानुमान",
-      advice: "🌿 किसान सलाह",
-      loading: "लोड हो रहा है...",
-      noRain: "☀️ बारिश की संभावना नहीं",
-      rainExpected: "🌧️ बारिश की संभावना",
-    },
-    mr: {
-      title: "🌾 स्मार्ट हवामान सहाय्यक",
-      search: "शोधा",
-      useLocation: "📍 माझे स्थान वापरा",
-      rainfallAlerts: "☔ पावसाचा इशारा",
-      next24: "पुढील 24 तास:",
-      forecast: "📅 5 दिवसांचा अंदाज",
-      advice: "🌿 शेतकरी सल्ला",
-      loading: "लोड होत आहे...",
-      noRain: "☀️ पाऊस अपेक्षित नाही",
-      rainExpected: "🌧️ पाऊस अपेक्षित",
-    },
+  // ---------------- Language Switch -----------------
+  const handleLanguageChange = (e) => {
+    const newLang = e.target.value;
+    setLanguage(newLang);
+    i18n.changeLanguage(newLang);
   };
-
-  const t = translations[language];
 
   return (
     <div className="weather-container">
-      <h2 className="title">{t.title}</h2>
+      <h2 className="title">{t("title", { defaultValue: "🌾 Smart Weather Assistant" })}</h2>
 
       <div className="lang-select">
-        🌐 <span>Select Language:</span>
-        <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+        🌐 <span>{t("selectLang", { defaultValue: "Select Language:" })}</span>
+        <select value={language} onChange={handleLanguageChange}>
           <option value="en">English</option>
           <option value="hi">Hindi</option>
           <option value="mr">Marathi</option>
@@ -201,15 +184,15 @@ export default function Weather() {
       <div className="search-box">
         <input
           type="text"
-          placeholder="Enter city..."
+          placeholder={t("enterCity", { defaultValue: "Enter city..." })}
           value={city}
           onChange={(e) => setCity(e.target.value)}
         />
         <button onClick={getWeatherByCity} disabled={loading}>
-          {loading ? t.loading : t.search}
+          {loading ? t("loading", { defaultValue: "Loading..." }) : t("search", { defaultValue: "Search" })}
         </button>
         <button className="gps-btn" onClick={getWeatherByLocation}>
-          {t.useLocation}
+          {t("useLocation", { defaultValue: "📍 Use My Location" })}
         </button>
       </div>
 
@@ -218,42 +201,32 @@ export default function Weather() {
       {weatherData && (
         <div className="weather-box">
           <h3>{weatherData.name}</h3>
-          <p>
-            <WiThermometer size={24} /> {weatherData.main.temp}°C
-          </p>
-          <p>
-            <WiCloud size={24} /> {weatherData.weather[0].description}
-          </p>
-          <p>
-            <WiStrongWind size={24} /> {weatherData.wind.speed} m/s
-          </p>
-          <p>
-            <WiHumidity size={24} /> {weatherData.main.humidity}%
-          </p>
+          <p><WiThermometer size={24} /> {weatherData.main.temp}°C</p>
+          <p><WiCloud size={24} /> {weatherData.weather[0].description}</p>
+          <p><WiStrongWind size={24} /> {weatherData.wind.speed} m/s</p>
+          <p><WiHumidity size={24} /> {weatherData.main.humidity}%</p>
         </div>
       )}
 
       {forecastInfo && (
         <div className="forecast-alert">
-          <h4><strong>{t.rainfallAlerts}</strong></h4>
+          <h4><strong>{t("rainfallAlerts", { defaultValue: "☔ Rainfall Alerts" })}</strong></h4>
           <p>
-            {t.next24}{" "}
+            {t("next24", { defaultValue: "Next 24 hrs:" })}{" "}
             {forecastInfo.rain24
-              ? `${t.rainExpected} (${forecastInfo.total24} mm)`
-              : t.noRain}
+              ? `🌧️ Expected (${forecastInfo.total24} mm)`
+              : "☀️ No rain expected"}
           </p>
         </div>
       )}
 
       {dailyForecast.length > 0 && (
         <div className="forecast-section">
-          <h4>{t.forecast}</h4>
+          <h4>{t("forecast", { defaultValue: "📅 5-Day Forecast" })}</h4>
           <div className="forecast-grid">
             {dailyForecast.map((day, i) => (
               <div key={i} className="forecast-card">
-                <p>
-                  <strong>{day.day}</strong>
-                </p>
+                <p><strong>{day.day}</strong></p>
                 <p>{day.temp}°C</p>
                 <p>{day.condition}</p>
               </div>
@@ -262,12 +235,11 @@ export default function Weather() {
         </div>
       )}
 
-      {advice && (
+      {(advice || cropSuggestion) && (
         <div className="farmer-advice">
-          <h4>{t.advice}</h4>
-          <p>
-            <GiFarmer size={22} /> {advice}
-          </p>
+          <h4>🌿 Farmer Advice</h4>
+          <p><GiFarmer size={22} /> {advice}</p>
+          <p className="crop-suggestion">{cropSuggestion}</p>
         </div>
       )}
     </div>
