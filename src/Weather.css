@@ -1,163 +1,196 @@
-/* src/Weather.css */
-.weather-box {
-  max-width: 720px;
-  margin: 20px auto;
-  padding: 18px;
+/* 🌦️ General Layout */
+.weather-container {
+  min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  color: #000000;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 6px 18px rgba(210, 207, 155, 0.245);
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  padding: 30px 20px;
+  color: #222;
+  font-family: "Poppins", sans-serif;
 }
 
+/* 🌾 Title */
 .title {
-  margin: 0 0 12px;
-  font-size: 1.25rem;
+  font-size: 2rem;
+  color: #f1c40f;
+  font-weight: 600;
+  margin-bottom: 20px;
   text-align: center;
-  color: #72f004;
 }
 
-.form-row {
+/* 🌍 Search + Location */
+.search-box {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
   justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
-.city-input {
-  flex: 1 1 260px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #5010c7;
+.search-box input {
+  padding: 10px 15px;
+  width: 250px;
+  border-radius: 10px;
+  border: 1.5px solid #ddd;
+  font-size: 1rem;
   outline: none;
-  font-size: 0.95rem;
 }
 
-.city-input:focus {
-  box-shadow: 0 0 0 3px rgba(2, 128, 144, 0.06);
-  border-color: #028488;
-}
-
-.btn {
-  background: #028488;
+.search-box button {
+  background-color: #3498db;
   color: #fff;
   border: none;
+  border-radius: 10px;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.3s ease;
+}
+
+.search-box button:hover {
+  background-color: #2e86c1;
+}
+
+.gps-btn {
+  background-color: #fff;
+  color: #e74c3c;
+  border: 2px solid #e74c3c;
+  font-weight: 600;
+}
+
+.gps-btn:hover {
+  background-color: #e74c3c;
+  color: #fff;
+}
+
+/* 📍 Location Text */
+.location-text {
+  font-size: 0.9rem;
+  color: #f5f6fa;
+  margin-top: 5px;
+  margin-bottom: 15px;
+}
+
+/* 🌦️ Main Weather Box */
+.weather-box {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 25px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.weather-box h3 {
+  margin-bottom: 10px;
+  font-size: 1.4rem;
+  color: #2c3e50;
+}
+
+.weather-box p {
+  margin: 5px 0;
+  font-size: 1rem;
+  color: #444;
+}
+
+/* ⚠️ Rainfall Alerts */
+.forecast-alert {
+  background: #fffaf2;
+  border-left: 6px solid #f39c12;
+  border-radius: 10px;
+  padding: 15px;
+  width: 90%;
+  max-width: 400px;
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+.forecast-alert h4 {
+  margin-bottom: 8px;
+}
+
+/* 📅 5-Day Forecast */
+.forecast-section {
+  width: 90%;
+  max-width: 600px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.forecast-section h4 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.forecast-card {
+  background: #f8f9fa;
+  border-radius: 10px;
+  text-align: center;
+  padding: 10px;
+  transition: 0.3s ease;
+  border: 1px solid #eee;
+}
+
+.forecast-card:hover {
+  transform: translateY(-3px);
+  background: #ecf9ff;
+}
+
+.forecast-card p {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* 🌿 Farmer Advice */
+.farmer-advice {
+  background: #eaf4ff;
+  border-left: 6px solid #3498db;
+  padding: 15px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  color: #2c3e50;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.farmer-advice h4 {
+  margin-bottom: 8px;
+  color: #21618c;
+}
+
+/* 🌐 Language Dropdown */
+.language-select {
+  margin-bottom: 15px;
   padding: 8px 12px;
   border-radius: 8px;
-  cursor: pointer;
-}
-.btn:hover { opacity: 0.95; }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.btn.alt {
-  background: #0ea5a6;
+  border: 1.5px solid #ccc;
+  font-size: 1rem;
 }
 
-.btn.small {
-  padding: 6px 8px;
-  font-size: 0.85rem;
-}
+/* Responsive Design */
+@media (max-width: 600px) {
+  .title {
+    font-size: 1.6rem;
+  }
 
-.loader-row {
-  display:flex;
-  align-items:center;
-  gap:8px;
-  justify-content:center;
-  margin: 8px 0;
-}
-.weather-temp {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #ff5722; /* orange for temperature */
-}
+  .weather-box,
+  .forecast-section,
+  .farmer-advice {
+    width: 100%;
+  }
 
-.weather-humidity {
-  color: #2196f3; /* blue for humidity */
-}
-
-.weather-wind {
-  color: #9e9e9e; /* gray for wind */
-}
-
-.spinner {
-  width: 28px;
-  height: 28px;
-  border: 4px solid #e6eef0;
-  border-top-color: #028488;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.error {
-  color: #b00020;
-  text-align: center;
-  margin: 8px 0;
-}
-
-.weather-card {
-  display: block;
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 10px;
-  background: linear-gradient(180deg, #f1a40b, #ffffff);
-  border: 1px solid #40ee07;
-}
-
-.card-top {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-}
-.city-name {
-  font-weight: 600;
-  font-size: 1.1rem;
-}
-.weather-icon { width:64px; height:64px; }
-
-.card-body {
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  margin-top:8px;
-}
-
-.temp { font-size: 2rem; font-weight:700; color:#0f172a; }
-.desc { text-transform: capitalize; color:#334155; }
-
-.metrics {
-  display:flex;
-  gap:14px;
-  flex-wrap:wrap;
-  font-size:0.95rem;
-  color:#475569;
-}
-
-.card-actions { margin-top:6px; }
-
-.fav-section { margin-top:14px; }
-.muted { color:#64748b; }
-
-.fav-list { list-style:none; padding:0; margin:8px 0; display:flex; gap:8px; flex-wrap:wrap; }
-.fav-item {
-  display:flex;
-  gap:8px;
-  align-items:center;
-  background: #f8fafc;
-  padding:8px;
-  border-radius:8px;
-  border:1px solid #eef2f7;
-}
-.link-btn {
-  border: none;
-  background: none;
-  color: #0369a1;
-  font-weight: 600;
-  cursor: pointer;
-  padding:0;
+  .forecast-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
