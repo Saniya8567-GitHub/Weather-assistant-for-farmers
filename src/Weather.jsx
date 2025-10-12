@@ -4,7 +4,7 @@ import { GiFarmer } from "react-icons/gi";
 import "./Weather.css";
 import { useTranslation } from "react-i18next";
 
-const VITE_WEATHER_KEY = "78ed0eeee94a2de54804f3e574f7d36c"; // Replace with your API key
+const VITE_WEATHER_KEY = "78ed0eeee94a2de54804f3e574f7d36c"; 
 
 export default function Weather() {
   const { t, i18n } = useTranslation();

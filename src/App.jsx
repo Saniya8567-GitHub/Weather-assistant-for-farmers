@@ -17,7 +17,7 @@ function App() {
         </a>
       </div>
 
-      <h1>Farmer App - coming soon!!</h1>
+      <h1>Smart Weather Assistant!!</h1>
 
       {/* 👇 New Weather component goes right here */}
       <Weather />
